@@ -196,4 +196,7 @@ lib_deps =
 - Marek Bajer
 - Pan učitel Burda
 
+- **Další projekt s RBCX:** 
+- https://github.com/ZemanNz/RBCX-ROBOT-BRNO-2025.git
+
 
