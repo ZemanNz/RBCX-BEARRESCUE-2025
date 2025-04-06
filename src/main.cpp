@@ -3,26 +3,56 @@
 #include "motor_commands.h"
 #include <iostream>
 #include <RBCX.h>
+//#include <Adafruit_TCS34725.h>
 
 void trap() {
     Serial.println("trap\n");
     while (1);
 }
 
+//Adafruit_VL53L0X lox1; // První senzor (bude mít adresu 0x31)
+//Adafruit_VL53L0X lox2; // Druhý senzor (bude mít adresu 0x32)
+
+// Funkce pro inicializaci laserového senzoru
+bool initLaserSensor(uint8_t address, Adafruit_VL53L0X &sensor) {
+    Serial.print("Inicializace senzoru na adrese: 0x");
+    Serial.println(address, HEX);
+
+    if (!rkLaserInit(address, sensor, true)) {
+        Serial.print("Nepodarilo se inicializovat laserovy senzor na adrese: 0x");
+        Serial.println(address, HEX);
+        return false;
+    }
+
+    Serial.print("Laserovy senzor inicializovan na adrese: 0x");
+    Serial.println(address, HEX);
+    return true;
+}
+
 void setup() {
     Serial.begin(115200);
     Serial.println("RB3204-RBCX");
-    delay(50);
-    Serial.println("Init manager");
-    rkConfig cfg;
-    rkSetup(cfg);
-    static const uint8_t Bbutton1 = 34;
-    static const uint8_t Bbutton2 = 35;
-    pinMode(Bbutton1, INPUT);
-    pinMode(Bbutton2, INPUT);    
-    Serial.println("Motors initialized");
-}
 
+    // Inicializace vlastní instance I2C s definovanými piny
+    const int SDA_PIN = 21; // Replace with your SDA pin
+    const int SCL_PIN = 22; // Replace with your SCL pin
+    if (!Wire.begin()) {
+        Serial.println("Error: Failed to initialize I2C bus. Check wiring and pin definitions.");
+        trap();
+    }
+
+    /*/ Inicializace prvního laserového senzoru
+    if (!initLaserSensor(0x31, lox1)) {
+        trap();
+    }
+
+    // Inicializace druhého laserového senzoru
+    if (!initLaserSensor(0x32, lox2)) {
+        trap();
+    }
+    */
+    Serial.println("Vsechny senzory inicializovany.");
+}
 void loop() {
     // Kontrola stavu tlačítek
     if (rkButtonIsPressed(BTN_ON)) {
