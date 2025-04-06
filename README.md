@@ -192,9 +192,9 @@ lib_deps =
 
 ```
 - **Autor:** (NZ)
-- Díky:
-- Marek Bajer
-- Pan učitel Burda
+- **Díky:**
+   - Marek Bajer
+   - Pan učitel Burda
 
 - **Další projekt s RBCX:** 
 - https://github.com/ZemanNz/RBCX-ROBOT-BRNO-2025.git
