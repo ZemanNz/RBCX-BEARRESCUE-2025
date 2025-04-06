@@ -4,7 +4,7 @@
 
 Cílem projektu **RBCX-UPGRADE** je vylepšit funkčnost knihovny Robotka. Projekt přináší nové funkce a optimalizace, které zlepšují použitelnost a efektivitu knihovny, ale převážně je osekaný a odlehčený.
 
-![RBCX Front View](rbcx-front.png)
+![RBCX Front View](./rbcx-front.png)
 
 ### Klíčové vlastnosti:
 
@@ -65,7 +65,7 @@ Projekt **RBCX-UPGRADE** zlepšuje práci s knihovnou RBCX-Robotka-library přid
    pio run --target upload # Nahrání na desku (vypněte Serial Monitor před nahráním !!!)
    pio run --target clean  # Vyčištění sestavení
    ```
-![" "](SharedScreenshot.jpg)
+![" "](./SharedScreenshot.jpg)
 ---
 
 ## 🔧 Ovládání tlačítek a LED
