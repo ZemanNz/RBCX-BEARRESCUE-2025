@@ -1,50 +1,60 @@
-# README pro projekt rbcx-upgrade
+# RBCX-UPGRADE 🤖
 
 ## 🚀 Účel projektu
 
-Cílem projektu **rbcx-upgrade** je vylepšit funkčnost knihovny RBCX pomocí knihovny Robotka. Projekt přináší nové funkce a optimalizace, které zlepšují použitelnost a efektivitu knihovny.
+Cílem projektu **RBCX-UPGRADE** je vylepšit funkčnost knihovny Robotka. Projekt přináší nové funkce a optimalizace, které zlepšují použitelnost a efektivitu knihovny, ale převážně je osekaný a odlehčený.
+
+![RBCX Front View](rbcx-front.png)
 
 ### Klíčové vlastnosti:
 
-- **Uvolnění paměti:** Optimalizace knihovny snížila využití paměti z přibližně 60 % na 14 %, což zvyšuje efektivitu.
-- **Desetinné řízení rychlosti:** Přidána možnost nastavit rychlost s desetinnou hodnotou, např. 50.5 místo pouze celých čísel (50 nebo 51).
-- **Integrace senzorů:** Nové funkce pro inicializaci a měření pomocí barevných a laserových senzorů. Podpora až dvou laserových senzorů pro přesnější měření.
-- **Bezpečnost motorů:** Zaveden bezpečnostní mechanismus, který zabraňuje zaseknutí motoru při nedosažení cílové pozice. Nastaven timeout pro případ, že motor nepostupuje.
+- **Uvolnění paměti:** Optimalizace knihovny snížila využití paměti z přibližně 60 % na 14 %, což zvyšuje efektivitu a dává nám prostor.
+- **Desetinné řízení rychlosti:** Přidána možnost nastavit rychlost s desetinnou hodnotou, např. 50.5 místo pouze celých čísel (50 nebo 51). Díky tomu můžeme přesněji nastavovat přímý pohyb.
+- **Integrace senzorů:** Nové funkce pro inicializaci a měření pomocí barevných a laserových senzorů. Podpora až dvou laserových senzorů (vyřešené měnění adresy).
+- **Bezpečnost motorů:** Zaveden mechanismus, který zabraňuje zaseknutí programu při nedosažení cílové pozice. Nastaven timeout pro případ, že motor nedojede.
 
 ---
 
 ## 📝 Shrnutí
 
-Projekt **rbcx-upgrade** zlepšuje knihovnu RBCX přidáním funkcí, jako je podpora barevných a laserových senzorů, optimalizace paměti a zavedení bezpečnostních mechanismů pro motory. Tyto upgrady zvyšují spolehlivost a efektivitu knihovny, zejména v robotických aplikacích.
+Projekt **RBCX-UPGRADE** zlepšuje práci s knihovnou RBCX-Robotka-library přidáním funkcí, jako je podpora barevných a laserových senzorů, optimalizace paměti a zavedení bezpečnostních mechanismů pro motory. Tyto upgrady zvyšují spolehlivost a efektivitu knihovny, zejména v robotických aplikacích. Všechny změny jsou provedeny pouze v RBCX-Robotka-library, žádná jiná knihovna nebyla upravena.
 
 ---
 
 ## 📂 Struktura projektu
 
-📁 **RBCX-Robot - version_for_github/**
+📁 **RBCX-OSEKANY_ROBOT/**
 
-- 📂 `.pio/`           – Výstup sestavení PlatformIO  
+- 📂 `.pio/`           – Výstup sestavení PlatformIO (lze kdykoliv smazat, při kompilaci se znovu vytvoří)
 - 📂 `.vscode/`        – Nastavení VS Code  
-- 📂 `include/`        – Vlastní knihovny (např. `colors.h`, `motorcommands.h`)  
-- 📂 `src/`            – Hlavní kód (např. `main.cpp`)  
-- 📂 `test/`           – Testovací kód  
-- 📜 `csache.py`       – Skript pro optimalizaci sestavení  
-- 📜 `partitions.csv`  – Konfigurace paměti ESP32  
-- 📜 `platformio.ini`  – Konfigurační soubor PlatformIO (důležité: obsahuje `lib_deps` a nastavení paměti desky)  
-- 📂 `lib/`            – Stažené knihovny  
-- 📜 `README.md`       – Dokumentace  
+- 📂 `examples/`       – Ukázkové příklady použití  
+- 📂 `include/`        – Vlastní hlavičkové soubory (např. `motor_commands.h`)  
+- 📂 `lib/`            – Knihovny projektu (např. `RB3204-RBCX-Robotka-library-master/`)  
+- 📂 `src/`            – Hlavní kód projektu (např. `main.cpp`)  
+- 📂 `test/`           – Testovací skripty a jednotkové testy  
+- 📜 `.gitignore`      – Ignorované soubory a složky pro Git  
+- 📜 `gridui_mtime`    – Metadata pro GridUI  
+- 📜 `ccache.py`       – Skript pro ccache  
+- 📜 `partitions.csv`  – Konfigurace paměťových oddílů  
+- 📜 `platformio.ini`  – Konfigurační soubor PlatformIO  
+- 📜 `README.md`       – Dokumentace projektu  
 
 ---
 
 ## 🚀 Instalace a použití
 
 1️⃣ **Nainstalujte VS Code a PlatformIO**  
-   - Stáhněte a nainstalujte VS Code.  
-   - Přidejte rozšíření PlatformIO a potřebné balíčky pro C++.  
+   - Stáhněte a nainstalujte [VS Code](https://code.visualstudio.com/).  
+   - Přidejte rozšíření [PlatformIO IDE](https://platformio.org/install) a potřebné balíčky pro C++.  
 
 2️⃣ **Stáhněte projekt**  
-   - Navštivte GitHub, klikněte na "Code" → "Download ZIP".  
+   - Navštivte [GitHub repozitář](https://github.com/ZemanNz/OSEKANA_ROBOTKA_PROJEKT.git) a klikněte na "Code" → "Download ZIP".  
    - Rozbalte ZIP soubor a otevřete jej ve VS Code (PlatformIO → Open Folder).  
+   - Alternativně můžete projekt klonovat přímo přes terminál:  
+     ```bash
+     git clone https://github.com/ZemanNz/OSEKANA_ROBOTKA_PROJEKT.git
+     cd RBCX-OSEKANY_ROBOT
+     ```
 
 3️⃣ **Sestavení a nahrání**  
    - Otevřete terminál pomocí "Ctrl + Shift + P" a spusťte příkazy PlatformIO. Ujistěte se, že máte správně vybraný COM port (např. COM4).  
@@ -52,9 +62,11 @@ Projekt **rbcx-upgrade** zlepšuje knihovnu RBCX přidáním funkcí, jako je po
 
    ```bash
    pio run                 # Kompilace
-   pio run --target upload # Nahrání na desku
+   pio run --target upload # Nahrání na desku (vypněte Serial Monitor před nahráním !!!)
    pio run --target clean  # Vyčištění sestavení
-   pio run --target info   # Zobrazení informací o projektu
+   ```
+![" "](SharedScreenshot.jpg)
+---
 
 ## 🔧 Ovládání tlačítek a LED
 
@@ -69,17 +81,32 @@ Na desce jsou čtyři LED diody: Červená, Zelená, Modrá, Žlutá.
 Lze je ovládat pomocí:
 
 ```cpp
-RK_LED_Blue(true);   // Zapnutí modré LED
-RK_LED_Blue(false);  // Vypnutí modré LED
+rkLedBlue(true);   // Zapnutí modré LED
+rkLedBlue(false);  // Vypnutí modré LED
 ```
 
 ## 🔌 Připojení periférií
 
-- 4x konektory pro motory s enkodéry.
-- 4x piny pro ultrazvukové senzory (označené U1–U4).
-- 4x servo konektory.
-- Tlačítka lze připojit na IN1 a IN2 (analogové hodnoty, ale mohou se použít i jako digitální): Piny 36, 39; IN3 a IN4: Piny 34, 35.
-- GPIO piny (vzdálenější od středu): Pin 27; blíže ke středu: Pin 14. Pro další piny doporučujeme konzultaci s dokumentací.
+- **Motory:**
+  - 4 konektory pro motory s enkodéry.
+
+- **Ultrazvukové senzory:**
+  - 4 piny označené jako U1–U4.
+
+- **Serva:**
+  - 4 konektory pro připojení serv.
+
+- **Tlačítka:**
+ - Tlačítka lze připojit na IN1 a IN2 (analogové hodnoty, ale mohou se použít i jako digitální) 
+ - Piny: IN1 = 36, IN2 = 39;, IN3 = 34 a IN4 = 35.
+
+- **GPIO piny:**
+  - GPIO27: Pin vzdálenější od středu desky.
+  - GPIO14: Pin blíže ke středu desky.
+
+- **Doporučení:**
+  - Při připojování periférií dbejte na správné napájecí napětí (3.3V nebo 5V podle specifikace).
+  - Pro další piny a podrobnosti konzultujte dokumentaci desky.
 
 ## 🔌 Zapojení a konfigurace pinů
 
@@ -112,42 +139,40 @@ git push                 # Odeslání na vzdálený repozitář
 git pull                 # Stažení posledních změn z repozitáře
 ```
 
-## ⚙️ Konfigurace (`rk-config`)
+## ⚙️ Konfigurace (`rkConfig()`)
 
-`rk-config` je součást knihovny Robotka a najdeš ji v souboru `robotka.h`. Umožňuje nakonfigurovat různé parametry hardware, například nastavení pinů pro motory, polaritu motorů, konfiguraci serv a podobně.
+`rkConfig()` je součást knihovny Robotka a najdeš ji v souboru `robotka.h`. Umožňuje nakonfigurovat různé parametry hardware, například nastavení pinů pro motory, polaritu motorů, zrychlení motorů, maximální rychlost motorů a podobně.
 
 ### Ukázková konfigurace:
 
 ```cpp
-rk_config.motor_pins = {GPIO12, GPIO13}; // Přiřazení pinů motorům
-rk_config.servo_pins = {GPIO14, GPIO15}; // Přiřazení pinů servům
-rk_config.motor_polarity = true;        // Nastavení polarity motorů
+rkConfig()
+        :  motor_id_left(1)
+        , motor_id_right(2)
+        , motor_max_power_pct(100)
+        , motor_polarity_switch_left(false)
+        , motor_polarity_switch_right(true)
+        , motor_enable_failsafe(false)
+        , motor_wheel_diameter(67)
+        , motor_max_ticks_per_second(5800)
+        , motor_max_acceleration(18000)
+        , stupid_servo_min(-1.65f)
+        , stupid_servo_max(1.65f) {
+    }
 ```
-
-## 🧪 Testování
-
-Ve složce `test/` najdeš ukázkové testovací skripty pro motory, senzory a další periférie. Můžeš si také přidat vlastní testy podle potřeby.
 
 ## 🔧 Konfigurace PlatformIO (`platformio.ini`)
 
 Soubor `platformio.ini` definuje prostředí a nastavení projektu. Obsahuje například:
 
-- Verzi platformy (`platform = espressif32`)
+- Verzi platformy (`platform = espressif32@~1.12.4`)
 - Definici desky (`board = esp32dev`)
 - Další volby jako `monitor_speed` a `upload_port`
-- Knihovny uvedené pod klíčem `lib_deps`
+- Knihovny uvedené pod klíčem `lib_deps` (sem se dávají knihovny, které chci, aby se při kompilaci stáhly) ---- mohu to nechat prázdné a knihovny přidat ručně do složky lib
+- Pokud nepoužívám laserové senzory, mohu ("-DUSE_VL53L0X") odstranit, a uvolnit místo
 
 ```ini
 ; PlatformIO Project Configuration File
-;
-;   Build options: build flags, source filter
-;   Upload options: custom upload port, speed and extra flags
-;   Library options: dependencies, extra library storages
-;   Advanced options: extra scripting
-;
-; Please visit documentation for the other options and examples
-; https://docs.platformio.org/page/projectconf.html
-
 [env:esp32dev]
 platform = espressif32@~1.12.4
 board = esp32dev
@@ -165,10 +190,9 @@ lib_deps =
         adafruit/Adafruit_VL53L0X @ ^1.2.4
 
 ```
+- **Autor:** (NZ)
+- Díky:
+- Marek Bajer
+- Pan učitel Burda
 
-## 👨‍💻 Další kroky
-
-1. Přizpůsob si projekt podle vlastních potřeb.
-2. Přidej další senzory nebo periférie.
-3. Důkladně otestuj celý systém, zda správně fungují motory, senzory i serva.
 
