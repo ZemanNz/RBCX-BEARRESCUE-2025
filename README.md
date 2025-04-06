@@ -103,7 +103,8 @@ rkLedBlue(false);  // Vypnutí modré LED
 - **GPIO piny:**
   - GPIO27: Pin vzdálenější od středu desky.
   - GPIO14: Pin blíže ke středu desky.
-
+![" "](./obrazky/SENZORY-15-edit.jpg)
+![" "](./obrazky/SENZORY-25-edit.jpg)
 - **Doporučení:**
   - Při připojování periférií dbejte na správné napájecí napětí (3.3V nebo 5V podle specifikace).
   - Pro další piny a podrobnosti konzultujte dokumentaci desky.
