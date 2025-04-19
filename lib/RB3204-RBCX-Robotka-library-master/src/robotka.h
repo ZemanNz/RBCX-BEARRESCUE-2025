@@ -16,7 +16,7 @@
 #include <Arduino.h>
 #include <Wire.h>
 #include "SmartServoBus.hpp"
-
+#include <Adafruit_TCS34725.h>
 #include "RBCX.h"
 #include "gridui.h"
 #include "rbprotocol.h"
@@ -661,39 +661,70 @@ void rkBuzzerSet(bool on);
 
 
 /**
- * \brief Inicializace barevného senzoru TCS34725.
+ * @brief Inicializuje TCS34725 barevný senzor na zadané I2C sběrnici.
  *
- * Tato funkce inicializuje barevný senzor TCS34725.
+ * Funkce ukládá instanci senzoru do interního pole podle jména a spouští
+ * komunikaci s modulem. Každý senzor je identifikován unikátním jménem.
  *
- * \return `true`, pokud byla inicializace úspěšná, jinak `false`.
+ * @param name    Textový identifikátor senzoru (např. "front" nebo "down").
+ * @param bus     Referenční I2C sběrnice (Wire nebo Wire1) pro komunikaci.
+ * @param tcs     Reference na instanci Adafruit_TCS34725 pro daný senzor.
+ * @return true   Pokud se senzor úspěšně inicializoval.
+ * @return false  Pokud se nepodařilo spojení s modulem.
  */
-bool rkColorSensorInit();
+bool rkColorSensorInit(const char* name, TwoWire& bus, Adafruit_TCS34725& tcs);
 
 /**
- * \brief Získání hodnot RGB z barevného senzoru.
+ * @brief Načte hodnoty RGB z barevného senzoru podle jeho identifikátoru.
  *
- * Tato funkce vrátí hodnoty červené, zelené a modré složky naměřené senzorem.
+ * Funkce vyhledá senzor v interním seznamu podle jména a použije
+ * metodu getRGB z knihovny Adafruit, která vrací normalizované
+ * RGB hodnoty v rozsahu 0–255.
  *
- * \param r Ukazatel na proměnnou pro červenou složku.
- * \param g Ukazatel na proměnnou pro zelenou složku.
- * \param b Ukazatel na proměnnou pro modrou složku.
- * \return `true`, pokud bylo měření úspěšné, jinak `false`.
+ * @param name  Textový identifikátor senzoru (stejný jako při init).
+ * @param r     Ukazatel na float pro červenou složku (0.0–255.0).
+ * @param g     Ukazatel na float pro zelenou složku (0.0–255.0).
+ * @param b     Ukazatel na float pro modrou složku (0.0–255.0).
+ * @return true   Pokud se měření úspěšně provedlo.
+ * @return false  Pokud senzor není nalezen.
  */
-bool rkColorSensorGetRGB(float* r, float* g, float* b);
+bool rkColorSensorGetRGB(const char* name, float* r, float* g, float* b);
+
 
 #ifdef USE_VL53L0X // Podmíněná kompilace pro barevný senzor
 #include <Adafruit_VL53L0X.h> // Přidání této řádky
-bool rkLaserInit(uint8_t address, Adafruit_VL53L0X& sensor, bool prvni);
 
 /**
- * \brief Získání vzdálenosti z laserového senzoru VL53L0X.
+ * @brief Inicalizuje VL53L0X ToF senzor a přepíše jeho I2C adresu, pokud je potřeba.
  *
- * Tato funkce vrátí naměřenou vzdálenost v milimetrech.
+ * Provádí hardwarový reset senzoru pomocí XSHUT pinu, poté:
+ *   - Pokusí se bootnout na zadanou new_address; pokud se to podaří, inicializace skončí.
+ *   - Jinak provede boot na výchozí adrese 0x29, zapíše do registru 0x8A new_address
+ *     a provede druhý boot na new_address.
  *
- * \param address I2C adresa senzoru.
- * \return Naměřená vzdálenost v mm, nebo -1 při chybě.
+ * @param name        Textový identifikátor senzoru pro ladicí výpisy.
+ * @param bus         Referenční I2C sběrnice (Wire nebo Wire1) pro komunikaci.
+ * @param lox         Reference na instanci Adafruit_VL53L0X pro daný senzor.
+ * @param xshut_pin   GPIO číslo pinu připojeného na XSHUT senzoru (hard reset).
+ * @param new_address Nová 7bit I2C adresa senzoru (např. 0x30).
  */
-int16_t rkLaserGetDistance(Adafruit_VL53L0X& sensor);
+void rk_laser_init(const char*      name,
+    TwoWire&         bus,
+    Adafruit_VL53L0X& lox,
+    uint8_t          xshut_pin,
+    uint8_t         new_address);
+/**
+ * @brief Přečte jednorázově vzdálenost z jednoho senzoru podle jména.
+ */
+/**
+ * @brief Přečte jednorázově vzdálenost z VL53L0X senzoru podle jeho identifikátoru.
+ *
+ * Vyhledá senzor v interním seznamu podle jména a provede jednorázové měření.
+ *
+ * @param name  Textový identifikátor senzoru (stejný, jaký byl zadán při init).
+ * @return      Naměřená vzdálenost v milimetrech, nebo -1 při chybě či mimo rozsah.
+ */
+int rk_laser_measure(const char* name);
 /**@}*/
 #endif
 

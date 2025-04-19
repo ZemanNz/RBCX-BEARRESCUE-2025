@@ -1,105 +1,84 @@
-#include <Arduino.h>
 #include <Wire.h>
-#include "motor_commands.h"
-#include <iostream>
-#include <RBCX.h>
-//#include <Adafruit_TCS34725.h>
+#include <Adafruit_VL53L0X.h>
+#include <Adafruit_TCS34725.h>
+#include "robotka.h"
 
-void trap() {
-    Serial.println("trap\n");
-    while (1);
-}
-
-//Adafruit_VL53L0X lox1; // První senzor (bude mít adresu 0x31)
-//Adafruit_VL53L0X lox2; // Druhý senzor (bude mít adresu 0x32)
-
-// Funkce pro inicializaci laserového senzoru
-bool initLaserSensor(uint8_t address, Adafruit_VL53L0X &sensor) {
-    Serial.print("Inicializace senzoru na adrese: 0x");
-    Serial.println(address, HEX);
-
-    if (!rkLaserInit(address, sensor, true)) {
-        Serial.print("Nepodarilo se inicializovat laserovy senzor na adrese: 0x");
-        Serial.println(address, HEX);
-        return false;
-    }
-
-    Serial.print("Laserovy senzor inicializovan na adrese: 0x");
-    Serial.println(address, HEX);
-    return true;
-}
+// deklarace instanci senzoru
+Adafruit_VL53L0X loxFront = Adafruit_VL53L0X();
+Adafruit_VL53L0X loxBottom = Adafruit_VL53L0X();
+Adafruit_TCS34725 tcs1 = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_50MS, TCS34725_GAIN_4X);
+Adafruit_TCS34725 tcs2 = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_50MS, TCS34725_GAIN_4X);
+float r1, g1, b1;
+float r2, g2, b2;
 
 void setup() {
-    Serial.begin(115200);
-    Serial.println("RB3204-RBCX");
+  Serial.begin(115200);
+  rkConfig cfg; rkSetup(cfg);
+  delay(50);
+  pinMode(21, PULLUP);
+  pinMode(22, PULLUP);
+  pinMode(14, PULLUP);
+  pinMode(26, PULLUP);
 
-    // Inicializace vlastní instance I2C s definovanými piny
-    const int SDA_PIN = 21; // Replace with your SDA pin
-    const int SCL_PIN = 22; // Replace with your SCL pin
-    if (!Wire.begin()) {
-        Serial.println("Error: Failed to initialize I2C bus. Check wiring and pin definitions.");
-        trap();
-    }
 
-    /*/ Inicializace prvního laserového senzoru
-    if (!initLaserSensor(0x31, lox1)) {
-        trap();
-    }
+  // 1) Spust obě I2C sběrnice
+  Wire.begin(14, 26, 400000);
+  Wire.setTimeOut(1);
+  Wire1.begin(21, 22, 400000);
+  Wire1.setTimeOut(1);
+  // 2) Inicializuj senzory:
 
-    // Inicializace druhého laserového senzoru
-    if (!initLaserSensor(0x32, lox2)) {
-        trap();
+
+  rk_laser_init("front",  Wire1, loxFront,  27, 0x30);
+  rk_laser_init("bottom", Wire,  loxBottom, 33, 0x31);
+
+  rkColorSensorInit("front_tcs", Wire1, tcs1);
+  rkColorSensorInit("bottom_tcs", Wire, tcs2);
+ 
+
+  Serial.println("Scanning I2C WIRE1...");
+    for (byte addr = 1; addr < 127; addr++) {
+      Wire1.beginTransmission(addr);
+      if (Wire1.endTransmission() == 0) {
+        Serial.print("  Found: 0x");
+        Serial.println(addr, HEX);
+      }
     }
-    */
-    Serial.println("Vsechny senzory inicializovany.");
+    Serial.println("Scan complete.\n");
+
+    Serial.println("Scanning I2C WIRE...");
+    for (byte addr = 1; addr < 127; addr++) {
+      Wire.beginTransmission(addr);
+      if (Wire.endTransmission() == 0) {
+        Serial.print("  Found: 0x");
+        Serial.println(addr, HEX);
+      }
+    }
 }
+
 void loop() {
-    // Kontrola stavu tlačítek
-    if (rkButtonIsPressed(BTN_ON)) {
-        Serial.println("Button ON pressed");
-        rkLedRed(true); // Turn on red LED
-        delay(1000); // Wait for 500 milliseconds
-        forward(-2000, 70); // Call a motor function
-        delay(500); // Wait for the motor function to execute
-        rkLedRed(false); // Turn off red LED
-    } else if (rkButtonIsPressed(BTN_RIGHT)) {
-        Serial.println("Button OFF pressed");
-        rkLedBlue(true); // Turn on blue LED
-        delay(1000); // Wait for 500 milliseconds
-        forward(2000, 40); // Call a motor function
-        delay(500); // Wait for the motor function to execute
-        rkLedBlue(false); // Turn off blue LED
-    } else if (rkButtonIsPressed(BTN_UP)) {
-        Serial.println("Button UP pressed");
-        rkLedGreen(true); // Turn on green LED
-        delay(1000); // Wait for 500 milliseconds
-        radius_r(-360, 200, 40); // Call a radius turn function
-        delay(500); // Wait for the motor function to execute
-        rkLedGreen(false); // Turn off green LED
-    } else if (rkButtonIsPressed(BTN_DOWN)) {
-        Serial.println("Button DOWN pressed");
-        rkLedYellow(true); // Turn on yellow LED
-        delay(1000); // Wait for 500 milliseconds
-        radius_r(360, 200, 40); // Call a radius turn function
-        delay(500); // Wait for the motor function to execute
-        rkLedYellow(false); // Turn off yellow LED
-    } else if (rkButtonIsPressed(BTN_LEFT)) {
-        Serial.println("Button LEFT pressed");
-        rkLedAll(true); // Turn on all LEDs
-        delay(1000); // Wait for 500 milliseconds
-        turn_on_spot(360); // Call a turn on spot function
-        delay(500); // Wait for the motor function to execute
-        rkLedAll(false); // Turn off all LEDs
+  int d1 = rk_laser_measure("front");
+  int d2 = rk_laser_measure("bottom");
+  
+    Serial.println("Scan complete.\n");
+  Serial.print("Front:  "); Serial.print(d1>=0?String(d1):"Err"); Serial.print(" mm, ");
+  Serial.print("Bottom: "); Serial.print(d2>=0?String(d2):"Err"); Serial.println(" mm");
+
+  
+  if (rkColorSensorGetRGB("front_tcs", &r1, &g1, &b1)) {
+    Serial.print("R: "); Serial.print(r1, 3);
+    Serial.print(" G: "); Serial.print(g1, 3);
+    Serial.print(" B: "); Serial.println(b1, 3);
+  } else {
+    Serial.println("Sensor 'front_tcs' not found.");
+  }
+    if (rkColorSensorGetRGB("bottom_tcs", &r2, &g2, &b2)) {
+        Serial.print("R: "); Serial.print(r2, 3);
+        Serial.print(" G: "); Serial.print(g2, 3);
+        Serial.print(" B: "); Serial.println(b2, 3);
+    } else {
+        Serial.println("Sensor 'bottom_tcs' not found.");
     }
-    delay(100); // Small delay to prevent busy waiting
+
+  delay(1000);
 }
-/*
-hele, tak to jsme nejak celkove osekaly a vylepsily tuhle knihovnu,
- ted by bylo dobry jeste udelat: 
- 1) Pridat sem funkce na inializaci 
- a vyuziti laseroveho senzoru (ta inicializace by mela byt i pro vyce stejnych
-  senzoru, takze budeme muset nastavovat adresy) 
-  2) Pridat sem funkce na inializaci a vyuziti barevneho senzoru(ten staci 1) 
-  3) vytvorit examply pro tuto novou knihovnu 
-  4) nahrat na muj githab a udelat readme.md -- kde bude vse popsane
-*/

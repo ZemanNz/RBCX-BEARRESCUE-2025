@@ -6,7 +6,7 @@
 #include "robotka.h"
 #ifdef USE_VL53L0X
 #include <Adafruit_VL53L0X.h>
-#include <map>
+#include <rk_laser.cpp>
 #endif
 #include "RBCX.h"
 #include <Adafruit_TCS34725.h>
@@ -328,28 +328,85 @@ void rkBuzzerSet(bool on) {
     Manager::get().piezo().setState(on);
 }
 
+void rk_laser_init(const char* name,TwoWire& bus,  Adafruit_VL53L0X& lox, uint8_t   xshut_pin,uint8_t    new_address){
 
-
-static Adafruit_TCS34725 colorSensor = Adafruit_TCS34725(TCS34725_INTEGRATIONTIME_614MS, TCS34725_GAIN_1X);
-
-bool rkColorSensorInit() {
-    if (colorSensor.begin()) {
-        Serial.println("Color sensor initialized successfully.");
-        return true;
-    } else {
-        Serial.println("Failed to initialize color sensor.");
-        return false;
-    }
+    return rk_laser_init_basic(name,  bus, lox, xshut_pin, new_address);
 }
 
-bool rkColorSensorGetRGB(float* r, float* g, float* b) {
-    if (!colorSensor.begin()) {
-        Serial.println("Color sensor is not initialized.");
-        return false;
+int rk_laser_measure(const char* name){
+    return rk_laser_measure_basic(name);
+}
+
+#define MAX_COLOR_SENSORS 2
+
+struct ColorSensor {
+  const char*           name;
+  Adafruit_TCS34725*    tcs;
+  TwoWire*              bus;
+};
+static ColorSensor colorSensors[MAX_COLOR_SENSORS];
+static uint8_t    colorCount = 0;
+
+/**
+ * @brief Inicializuje TCS34725 barevný senzor na zadané I2C sběrnici.
+ *
+ * Funkce ukládá instanci senzoru do interního pole podle jména a spouští
+ * komunikaci s modulem. Každý senzor je identifikován unikátním jménem.
+ *
+ * @param name    Textový identifikátor senzoru (např. "front" nebo "down").
+ * @param bus     Referenční I2C sběrnice (Wire nebo Wire1) pro komunikaci.
+ * @param tcs     Reference na instanci Adafruit_TCS34725 pro daný senzor.
+ * @return true   Pokud se senzor úspěšně inicializoval.
+ * @return false  Pokud se nepodařilo spojení s modulem.
+ */
+bool rkColorSensorInit(const char* name, TwoWire& bus, Adafruit_TCS34725& tcs)
+{
+  if (colorCount >= MAX_COLOR_SENSORS) {
+    Serial.println("ERROR: Max pocet color sensoru prekrocen");
+    return false;
+  }
+
+  // nastav I2C sběrnici
+  tcs.begin(TCS34725_ADDRESS, &bus);
+  if (!tcs.begin(TCS34725_ADDRESS, &bus)) {
+    Serial.print("ERROR: Nelze pripojit k color senzoru ");
+    Serial.println(name);
+    return false;
+  }
+
+  // ulož konfiguraci
+  ColorSensor& s = colorSensors[colorCount++];
+  s.name = name;
+  s.tcs  = &tcs;
+  s.bus  = &bus;
+
+  return true;
+}
+
+/**
+ * @brief Načte hodnoty RGB z barevného senzoru podle jeho identifikátoru.
+ *
+ * Funkce najde senzor v interním seznamu podle jména a zavolá getRGB, 
+ * přičte kompanzní faktor a vrátí normalizované hodnoty v rozsahu 0.0–1.0.
+ *
+ * @param name  Textový identifikátor senzoru (stejný jako při init).
+ * @param r     Ukazatel na float pro červenou složku (0.0–1.0).
+ * @param g     Ukazatel na float pro zelenou složku (0.0–1.0).
+ * @param b     Ukazatel na float pro modrou složku (0.0–1.0).
+ * @return true   Pokud se měření úspěšně provedlo.
+ * @return false  Pokud senzor není nalezen nebo měření selhalo.
+ */
+bool rkColorSensorGetRGB(const char* name, float* r, float* g, float* b)
+{
+    for (uint8_t i = 0; i < colorCount; i++) {
+        ColorSensor& s = colorSensors[i];
+        if (strcmp(s.name, name) == 0) {
+            // Načti RGB hodnoty (0-255) přímo do poskytnutých proměnných
+            s.tcs->getRGB(r, g, b);
+            return true;
+        }
     }
-    colorSensor.getRGB(r, g, b);
-    Serial.printf("RGB values: R = %f, G = %f, B = %f\n", *r, *g, *b);
-    return true;
+    return false;
 }
 
 void rkServosSetPosition(uint8_t id, float angleDegrees) {
