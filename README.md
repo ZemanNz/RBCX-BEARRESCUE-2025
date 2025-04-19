@@ -161,6 +161,21 @@ rkConfig()
         , stupid_servo_max(1.65f) {
     }
 ```
+## Práce s I2C
+
+- RBCX deska podporuje 2 I2C sběrnice.
+- Jedna I2C sběrnice je možná inicializovat na SDA(21) a SCL(22). To jsou piny (na desce oznaceny I2C rámečkem) , tedy piny D: SDA, C: SCL.
+- Druhou I2C sběrnici lze inicializovat na SDA(14) a SCL(26). Jsou to piny v sekci UART, oznaceny: IO6, IO4.
+- Na I2C sběrnici je muzeme zapojit senzory, které mají piny SDA a SCL, jako třeba TCS34725 nebo VL53L0X.
+- Laserový senzor: Inicializace pomocí rk_laser_init(name, wire, sensor, pin, address).
+- Barevný senzor: Inicializace pomocí rkColorSensorInit(name, wire, sensor).
+- Měření vzdálenosti: Funkce rk_laser_measure(name) vrací vzdálenost v mm nebo -1 při chybě.
+- RGB data: Funkce rkColorSensorGetRGB(name, &r, &g, &b) vrací true při úspěšném načtení.
+- Skenování I2C: K dispozici funkce pro ověření připojení na sběrnicích Wire a Wire1.
+- Správná inicializace: Senzory inicializujte ve funkci setup() před jejich použitím.
+- Unikátní adresy: Laserové senzory potřebují unikátní adresy, aby nedošlo ke konfliktu (např. 0x30).
+- Barevné senzory TCS34725 nepodporují zmenu adresy a mají neměnnou 0x29.
+- Lserove senzory VL53L0X mají XSHUT pin, na ktery pokud pustime LOW dočasně vypneme.
 
 ## 🔧 Konfigurace PlatformIO (`platformio.ini`)
 
