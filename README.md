@@ -183,7 +183,7 @@ UART (Universal Asynchronous Receiver/Transmitter) je jednoduché rozhraní pro 
 
 ### 📸 Zapojení UART na desce RBCX
 
-![UART RBCX](./obrazky/uart_rbcx.jpg)
+![](./obrazky/UART_RBCX.jpg)
 
 *(Na obrázku je vidět připojení vodičů k RBCX desce na UART2(na desve ESP UART2, RX a TX piny vedle IO5)(v codu: rx:16, tx:17).)*
 
