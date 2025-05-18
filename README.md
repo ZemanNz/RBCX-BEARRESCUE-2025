@@ -177,6 +177,105 @@ rkConfig()
 - Barevné senzory TCS34725 nepodporují zmenu adresy a mají neměnnou 0x29.
 - Lserove senzory VL53L0X mají XSHUT pin, na ktery pokud pustime LOW dočasně vypneme.
 
+## 🟦 Práce s UART
+
+UART (Universal Asynchronous Receiver/Transmitter) je jednoduché rozhraní pro sériovou komunikaci mezi deskou a dalšími zařízeními (například jiným mikrokontrolérem, PC, nebo periferiemi). Na desce RBCX je UART2 vyveden na pinech GPIO16 (RX) a GPIO17 (TX).
+
+### 📸 Zapojení UART na desce RBCX
+
+![UART RBCX](./obrazky/uart_rbcx.jpg)
+
+*(Na obrázku je vidět připojení vodičů k RBCX desce na UART2(na desve ESP UART2, RX a TX piny vedle IO5)(v codu: rx:16, tx:17).)*
+
+### 📚 Knihovna pro příjem struktury přes UART
+
+V projektu je připravena jednoduchá knihovna (viz `include/uart_commands.h`), která umožňuje:
+
+- **Inicializaci UART:**  
+  Funkce `uartInit()` nastaví UART2 na rychlost 115200 baudů a vypíše stav na Serial monitor.
+
+- **Příjem struktury:**  
+  Funkce `uartReceiveStruct()` umožňuje přijímat libovolnou strukturu (například příkaz pro servo nebo motor) s jednoduchým framingem (každá zpráva začíná bajty 0xAA 0x55).  
+  Funkci předáš prázdnou (neinicializovanou) strukturu, kterou tato funkce při úspěšném příjmu automaticky naplní přijatými daty.  
+  Funkce čeká na přijetí celé struktury, vypíše přijaté bajty na Serial monitor a vrátí `true`, pokud byla struktura úspěšně přijata.  
+  Díky tomu můžeš s naplněnou strukturou dále pracovat ve svém kódu.
+
+#### Ukázka použití v kódu
+
+```cpp
+#include "uart_commands.h"
+
+struct MyStruct {
+    uint8_t id;
+    int16_t value;
+};
+
+void setup() {
+    Serial.begin(115200);
+    while (!Serial);
+    uartInit(); // Inicializace UART2
+}
+
+void loop() {
+    MyStruct data;
+    if (uartReceiveStruct(data)) {
+        Serial.print("ID: "); Serial.print(data.id);
+        Serial.print(", Value: "); Serial.println(data.value);
+    }
+}
+```
+
+- **Stačí změnit strukturu podle potřeby.**
+- Funkce je univerzální – můžeš přijímat jakýkoliv typ struktury.
+
+---
+
+## 🟦 Práce se Serial monitorem
+
+Tato knihovna umožňuje ovládat serva a motory přímo přes Serial monitor. Můžeš zadávat příkazy ve formě textových řetězců, které se následně zpracují a provedou odpovídající akce na robotu.
+
+### ✨ Ovládání serv (příklad: `examples/ovladani_serial_monitor/ovladani_s_s.cpp`)
+
+- **Příkazy pro serva:**
+  - `s_s_init(id, min, max)` – Inicializace serva s daným ID a limity.
+  - `s_s_move(id, pozice)` – Okamžitý pohyb serva na zadanou pozici.
+  - `s_s_soft_move(id, pozice, rychlost)` – Plynulý pohyb serva na pozici s danou rychlostí.
+
+**Ukázka zadání v Serial monitoru:**
+```
+s_s_init(1, 0, 160)
+s_s_move(1, 90)
+s_s_soft_move(1, 150, 150)
+```
+
+### ✨ Ovládání motorů (příklad: `examples/ovladani_serial_monitor/ovladani_motoru.cpp`)
+
+- **Příkazy pro motory:**
+  - `encodery()` – Vypíše hodnoty enkodérů.
+  - `forward(rychlost, čas)` – Jede rovně danou rychlostí po zadaný čas.
+  - `radius_r(uhel, rychlost, polomer)` – Zatáčí doprava po kružnici.
+  - `radius_l(uhel, rychlost, polomer)` – Zatáčí doleva po kružnici.
+  - `turn_on_spot(uhel)` – Otočí se na místě o zadaný úhel.
+  - `back_buttons(cas)` – Couvne po stisknutí tlačítka.
+
+**Ukázka zadání v Serial monitoru:**
+```
+encodery()
+forward(100, 50)
+radius_r(90, 100, 40)
+turn_on_spot(180)
+```
+
+### 📝 Jak to funguje?
+
+- Zadáš příkaz do Serial monitoru (např. `s_s_move(1, 90)`).
+- Program příkaz rozparsuje, zkontroluje parametry a zavolá odpovídající funkci.
+- Výsledek (nebo případná chyba) se vypíše zpět do Serial monitoru.
+
+---
+
+**Díky této knihovně můžeš jednoduše testovat a ovládat robota bez nutnosti měnit kód – stačí zadávat příkazy přes Serial monitor!**
+
 ## 🔧 Konfigurace PlatformIO (`platformio.ini`)
 
 Soubor `platformio.ini` definuje prostředí a nastavení projektu. Obsahuje například:
