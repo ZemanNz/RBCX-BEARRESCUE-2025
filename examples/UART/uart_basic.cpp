@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include <stdint.h>
 #include "smart_servo_command.h"
+#include "robotka.h"
 
 #define RX1_PIN   5
 #define TX1_PIN   4  // mimochodem nepotřebujeme, ale Arduino vyžaduje parametry
