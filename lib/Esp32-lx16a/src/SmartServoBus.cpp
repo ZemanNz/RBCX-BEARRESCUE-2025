@@ -16,7 +16,7 @@
 namespace lx16a {
 
 const SmartServoBus::AutoStopParams SmartServoBus::DefaultAutoStopParams = {
-    .max_diff_centideg = 2000,
+    .max_diff_centideg = 600,
     .max_diff_readings = 3,
 };
 

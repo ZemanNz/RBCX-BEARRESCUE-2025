@@ -3,40 +3,26 @@
 #include "smart_servo_command.h"
 using namespace lx16a;
 
-void close_claw() {
-    s_s_soft_move(1, 0, 70.0); // Zavření klepeta na 10° s rychlostí 200
-    delay(1000); // Počkáme, až servo dokončí pohyb
-}
-void open_claw() {
-    s_s_move(1, 160); // Otevření klepeta na 160° s rychlostí 200
-    delay(1000); // Počkáme, až servo dokončí pohyb
-}
 void setup() {
-    Serial.begin(115200);
-    delay(1000); // Krátká pauza pro inicializaci sériové linky
-
-    // Inicializace serva s ID 1 a limity 10° až 200°
-    s_s_init(1, 0, 160);
-
-    delay(1000); // Pauza před dalším příkazem
-
-    // Tvrdý přímý pohyb na 90°
-    s_s_move(1, 90);
-
-    delay(2000); // Počkáme, až servo dokončí pohyb
-
-    // Jemný plynulý pohyb na 150° s rychlostí 150
-    s_s_soft_move(1, 150, 150);
-
-    delay(2000); // Počkáme, až servo dokončí pohyb
-
-    // Zavření klepeta
-    close_claw();
-    delay(2000); // Počkáme, až servo dokončí pohyb
-    // Otevření klepeta
-    open_claw();
+    rkConfig cfg;
+    cfg.motor_max_power_pct = 90; // limit the power
+    rkSetup(cfg);
+    printf("Robotka started!\n");
+    
+    rkLedRed(true); // Turn on red LED
+    rkLedBlue(true); // Turn on blue LED
+    auto &bus = rkSmartServoBus(2);
+    s_s_init(bus, 1, 0, 239);
+    s_s_init(bus, 0, 50, 160);
+    printf("Servo 0 je na pozici %f stupnu\n", bus.pos(0).deg());
+    printf("Servo 1 je na pozici %f stupnu\n", bus.pos(1).deg());
+    s_s_move(bus, 1, 160, 50.0);
+    delay(5000);
+    s_s_move(bus, 1, 0, 50.0);
+    delay(1000);
+    s_s_soft_move(bus, 0, 220, 30.0);
+    delay(5000);  
+    s_s_soft_move(bus, 0, 70, 30.0);
 }
-
 void loop() {
-    // Prázdná smyčka
 }
