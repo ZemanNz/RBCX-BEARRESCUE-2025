@@ -46,12 +46,11 @@ void setup() {
     delay(5000);
     s_s_move(bus, 1, 210, 50.0);
     delay(5000);
-    s_s_move(bus, 0, 180, 50.0);
-    delay(5000);
-    s_s_soft_move(bus, 0, 30, 40.0);
-    delay(5000);
     s_s_move(bus, 1, 0, 50.0);
     delay(10000);
+    s_s_move(bus, 0, 180, 50.0);
+    delay(5000);
+    s_s_move(bus, 0, 30, 50.0);
     scan_i2c();
     if (rkColorSensorGetRGB("front", &r, &g, &b)) {
         printf("R: %.3f", r);
@@ -64,9 +63,7 @@ void setup() {
     delay(5000); // Wait for a second before the next reading
     forward(2000, 70); // Call a motor function
     delay(5000); // Wait for the motor function to execute
-    back_buttons(20);
-    delay(5000); // Wait for the motor function to execute
-    forward(700, 70); // Call a motor function
+    turn_on_spot(360); // Call a turn on spot function
     delay(5000); // Wait for the motor function to execute
     while (true) {
         if ((digitalRead(Bbutton1) == LOW)){

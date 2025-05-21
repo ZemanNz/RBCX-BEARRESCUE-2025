@@ -10,21 +10,21 @@ void s_s_init(auto & bus, int id, int low = 0, int high = 240) {
     bus.limit(id, Angle::deg(low), Angle::deg(high));
     bus.setAutoStopParams(
         SmartServoBus::AutoStopParams{//nastaveni sily stisku
-            .max_diff_centideg = 550,
+            .max_diff_centideg = 400,
             .max_diff_readings = 2,
         });
-    Serial.printf("Servo %d inicializováno\n", id);
+    printf("Servo %d inicializováno\n", id);
 }
 
 // Funkce pro rychlý a přímý pohyb serva bez regulace
 void s_s_move(auto & bus, int id, int angle, int speed = 200.0) {
     if (angle < 0 || angle > 240) {
-        Serial.println("Chyba: Úhel musí být v rozsahu 0–240 stupňů.");
+        printf("Chyba: Úhel musí být v rozsahu 0–240 stupňů.");
         return;
     }
     bus.setAutoStop(id, false);
     bus.set(id, Angle::deg(angle), speed);
-    Serial.printf("Servo %d soft_move na %d stupňů rychlostí %d\n", id, angle, speed);
+    printf("Servo %d move na %d stupňů rychlostí %d\n", id, angle, speed);
 }
 
 // Funkce pro plynulý pohyb serva s ochranou proti zaseknutí
@@ -35,5 +35,5 @@ void s_s_soft_move(auto & bus, int id, int angle, int speed = 200.0) {
     }
     bus.setAutoStop(id, true);
     bus.set(id, Angle::deg(angle), speed);
-    Serial.printf("Servo %d soft_move na %d stupňů rychlostí %d\n", id, angle, speed);
+    printf("Servo %d soft_move na %d stupňů rychlostí %d\n", id, angle, speed);
 }
