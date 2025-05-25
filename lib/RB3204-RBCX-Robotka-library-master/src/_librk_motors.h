@@ -42,7 +42,7 @@ private:
     Motors(const Motors&) = delete;
 
     static int32_t scale(int32_t val);
-    static int16_t pctToPower(int8_t pct);
+    static int16_t pctToPower(float pct);
     int16_t pctToSpeed(float pct) const;
     int32_t mmToTicks(float mm) const;
     float ticksToMm(int32_t ticks) const;

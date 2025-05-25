@@ -122,7 +122,7 @@ void Motors::setSpeedById(rb::MotorId id, int8_t power) {
 
 float Motors::calculateExpectedTime(float distance, float speed){
     // Převod rychlosti z procent na mm/s
-    float speed_mm_per_s = (speed / 100.0) * m_max_speed * (m_wheel_circumference / (48.f * 41.62486f));
+    float speed_mm_per_s = (speed / 100.0) * m_max_speed * (127 / (48.f * 41.62486f));
     // Výpočet času v sekundách
     return distance / speed_mm_per_s;
 }
@@ -156,7 +156,7 @@ void Motors::drive(float left, float right, float speed_left, float speed_right,
         float expectedTimeLeft = calculateExpectedTime(left, speed_left);
         float expectedTimeRight = calculateExpectedTime(right, speed_right);
         float maxExpectedTime = std::max(expectedTimeLeft, expectedTimeRight);
-        const float timeoutSec = maxExpectedTime * 1.37f;
+        const float timeoutSec = maxExpectedTime * 1.67f;
 
         std::thread([this, itr, timeoutSec]() {
             unsigned long startTime = millis();
@@ -252,20 +252,20 @@ int32_t Motors::scale(int32_t val) {
     return val * 100 / RBPROTOCOL_AXIS_MAX;
 }
 
-int16_t Motors::pctToPower(int8_t pct) {
-    return rb::clamp(pct * INT16_MAX / 100, -INT16_MAX, INT16_MAX);
+int16_t Motors::pctToPower(float pct) {
+    return rb::clamp(static_cast<int16_t>(pct * INT16_MAX / 100), static_cast<int16_t>(-INT16_MAX), static_cast<int16_t>(INT16_MAX));
 }
 
 int16_t Motors::pctToSpeed(float pct) const {
-    return rb::clamp(static_cast<int16_t>(pct * m_max_speed / 100), static_cast<int16_t>(-INT16_MAX), static_cast<int16_t>(INT16_MAX));
+    return rb::clamp(static_cast<int16_t>(pct *  m_max_speed/ 100), static_cast<int16_t>(-INT16_MAX), static_cast<int16_t>(INT16_MAX));
 }
 
 int32_t Motors::mmToTicks(float mm) const {
-    return (mm / m_wheel_circumference) * 41.62486f * 48.f;
+    return (mm / m_wheel_circumference) * 40.4124852f * 48.f;
 }
 
 float Motors::ticksToMm(int32_t ticks) const {
-    return float(ticks) / 41.62486f / 48.f * m_wheel_circumference;
+    return float(ticks) / 40.4124852f / 48.f * m_wheel_circumference;
 }
 
 }; // namespacer rk

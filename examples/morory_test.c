@@ -7,16 +7,17 @@ void setup() {
   Serial.begin(115200);
   rkConfig cfg;
   rkSetup(cfg);
-  Serial.printf("Battery percent: \n");
-  printf(":", rkBatteryPercent());
-  Serial.printf("Battery voltage: \n");
-  printf(":",rkBatteryVoltageMv());
-  //rkLedRed(true); // Turn on red LED
+  
+  rkLedRed(true); // Turn on red LED
   rkLedBlue(true); // Turn on blue LED
   printf("Robotka started!\n");
     // Nastavení tlačítek
   pinMode(Bbutton1, INPUT_PULLUP);
   pinMode(Bbutton2, INPUT_PULLUP);
+  delay(5000); // Wait for 1 second
+  rkMotorsSetPower(100, 100);
+  delay(5000); // Wait for 1 second
+  rkMotorsSetPower(0, 0);
   Serial.println("Motor example started!");
 }
 
@@ -26,24 +27,10 @@ void loop() {
         Serial.println("Button ON pressed");
         rkLedRed(true); // Turn on red LED
         delay(3000); // Wait for 500 milliseconds
-        forward(2000, 50.0); // Call a motor function
-       // delay(5000); // Wait for the motor function to execute 
+        forward(-2000, 30); // Call a motor function
+        delay(500); // Wait for the motor function to execute 
         rkLedRed(false); // Turn off red LED
-    }else if(digitalRead(Bbutton1) == LOW) {
-        Serial.println("Button 1 pressed");
-        rkLedGreen(true); // Turn on blue LED
-        delay(3000); // Wait for 500 milliseconds
-        forward(2000, 50.0); // Call a motor function
-        //delay(1000); // Wait for the motor function to execute
-        rkLedGreen(false); // Turn off blue LED
-    } else if(digitalRead(Bbutton2) == LOW) {
-        Serial.println("Button 2 pressed");
-        rkLedYellow(true); // Turn on yellow LED
-        delay(3000); // Wait for 500 milliseconds
-        forward(2000, 95.0); // Call a motor function
-        rkLedYellow(false); // Turn off yellow LED
-    }
-    else if (rkButtonIsPressed(BTN_RIGHT)) {
+    } else if (rkButtonIsPressed(BTN_RIGHT)) {
         Serial.println("Button OFF pressed");
         rkLedBlue(true); // Turn on blue LED
         delay(3000); // Wait for 500 milliseconds
