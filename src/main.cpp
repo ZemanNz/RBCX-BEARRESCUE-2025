@@ -35,7 +35,16 @@ Esp32p4Message msg = {
     .on = false,
     .angle = 0
 };
-
+bool mam_ho(){
+    int distance = rkUltraMeasure(4);
+    Serial.printf("ultrazvuk: %d\n", distance); // Vypíše hodnotu distance
+    if(distance > 60 && distance < 800){
+        return false; // pokud je medvěd blízko, vrátí true
+    }
+    else{
+        return true;
+    }
+}
 void klepeta_open(auto & g_bus){
     s_s_move(g_bus, 0, 40, 120); // Otevře klepeta na servo s ID 0
     s_s_move(g_bus, 1, 200,120); // Otevře klepeta na servo s ID 1
