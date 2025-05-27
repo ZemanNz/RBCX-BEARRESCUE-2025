@@ -64,7 +64,7 @@ struct rkConfig {
         , motor_enable_failsafe(false)
         , motor_wheel_diameter(127)
         , motor_max_ticks_per_second(2600)
-        , motor_max_acceleration(22000)
+        , motor_max_acceleration(50000)
         , stupid_servo_min(-1.65f)
         , stupid_servo_max(1.65f) {
     }

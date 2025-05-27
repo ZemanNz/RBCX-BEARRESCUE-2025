@@ -88,21 +88,14 @@ void encoder(int cas)
     }
 }
 ////////////////////
-// Před funkcí:
-const float Kp = 55.0f;
-const float Ki = 0.01f;
-const float Kd = 0.1f;
-int a = 300; // koeficient zrychlovani
-//////////
 void forward(float mm, float speed) {
     int M1_pos = 0, M4_pos = 0, odhylaka = 0, integral = 0, last_odchylka = 0;
     int M1_pos_up = 0, M4_pos_up = 0, M1_pos_start = 0, M4_pos_start = 0;
     int target = (32000 * speed/100);
     std::cout << "target: " << target << std::endl;
-
+    int a = 300; // koeficient zrychlovani
     auto& man = rb::Manager::get(); // vytvoří referenci na man class
-    man.motor(rb::MotorId::M1).setCurrentPosition(0);
-    man.motor(rb::MotorId::M4).setCurrentPosition(0);
+
     // Startovní pozice
     man.motor(rb::MotorId::M1).requestInfo([&](rb::Motor& info) {
         M1_pos_start = -info.position();
@@ -128,8 +121,8 @@ void forward(float mm, float speed) {
         man.motor(rb::MotorId::M4).requestInfo([&](rb::Motor& info) {
             M4_pos = info.position();
         });
-        man.motor(rb::MotorId::M1).power(-i * 0.9);
-        man.motor(rb::MotorId::M4).power(i + odhylaka * Kp + integral * Ki + (odhylaka - last_odchylka) * Kd);
+        man.motor(rb::MotorId::M1).power(-i);
+        man.motor(rb::MotorId::M4).power(i + odhylaka * 20);
         Serial.printf("[ACCEL] i: %d | M1_pos: %d | M4_pos: %d | odchylka: %d | integral: %d\n", i, M1_pos, M4_pos, odhylaka, integral);
         delay(10);
     }
@@ -150,22 +143,13 @@ void forward(float mm, float speed) {
     integral = 0; // reset integrálu
 
     // Jízda na vzdálenost
-    while (M1_pos < (M1_must_go - (2 * M1_pos_diff)) && M4_pos < (M4_must_go - (2 * M4_pos_diff))) {
+    while (M1_pos < (M1_must_go - (2 * M1_pos_diff)) || M4_pos < (M4_must_go - (2 * M4_pos_diff))) {
         odhylaka = M1_pos - M4_pos;
         integral += odhylaka;
-        integral += odhylaka;
-        // omez ho v rozumných mezích, např. ±max_integral
-        const int max_integral = 10000;
-        if (integral >  max_integral) integral =  max_integral;
-        if (integral < -max_integral) integral = -max_integral;
-        man.motor(rb::MotorId::M1).power(-target*0.95);
-        int rawPower = target + odhylaka * Kp + integral * Ki + (odhylaka - last_odchylka) * Kd;
-        // saturace
-        const int maxPower = 32000;
-        if      (rawPower >  maxPower) rawPower =  maxPower;
-        else if (rawPower < -maxPower) rawPower = -maxPower;
-        man.motor(rb::MotorId::M4).power(rawPower);
 
+        man.motor(rb::MotorId::M1).power(-target);
+        int powerM4 = target + odhylaka * 55 + integral * 0.01 + (odhylaka - last_odchylka) * 0.1;
+        man.motor(rb::MotorId::M4).power(powerM4);
 
         man.motor(rb::MotorId::M1).requestInfo([&](rb::Motor& info) {
             M1_pos = -info.position();
@@ -174,7 +158,7 @@ void forward(float mm, float speed) {
             M4_pos = info.position();
         });
 
-        Serial.printf("[CONST] M1_pos: %d | M4_pos: %d | odchylka: %d | integral: %d | powerM4: %d\n", M1_pos, M4_pos, odhylaka, integral, rawPower);
+        Serial.printf("[CONST] M1_pos: %d | M4_pos: %d | odchylka: %d | integral: %d | powerM4: %d\n", M1_pos, M4_pos, odhylaka, integral, powerM4);
 
         delay(50);
         last_odchylka = odhylaka;
@@ -193,7 +177,7 @@ void forward(float mm, float speed) {
             M4_pos = info.position();
         });
         if(i < 5000){
-          while(M1_pos < ( M1_must_go - (speed/50.0 * 35))){
+          while(M1_pos < ( M1_must_go - (speed/50.0 * 20))){
             delay(10);
             man.motor(rb::MotorId::M1).requestInfo([&](rb::Motor& info) {
               M1_pos = -info.position();
@@ -214,29 +198,22 @@ void forward(float mm, float speed) {
     int diff = abs(M1_pos - M4_pos);
     if (M1_pos < M4_pos) {
         Serial.printf("[DOROVNÁNÍ] M1 dojíždí: %d ticků\n", diff);
-        while (M1_pos < (M4_pos-5)) {
-            man.motor(rb::MotorId::M1).power(-3900);
-            man.motor(rb::MotorId::M4).power(2500);
+        while (M1_pos < M4_pos) {
+            man.motor(rb::MotorId::M1).power(-3000);
+            man.motor(rb::MotorId::M4).power(-1500);
             man.motor(rb::MotorId::M1).requestInfo([&](rb::Motor& info) {
                 M1_pos = -info.position();
-            });
-            man.motor(rb::MotorId::M4).requestInfo([&](rb::Motor& info) {
-                M4_pos = info.position();
             });
             delay(5);
         }
     } else if (M4_pos < M1_pos) {
         Serial.printf("[DOROVNÁNÍ] M4 dojíždí: %d ticků\n", diff);
-        while (M4_pos < (M1_pos - 5)) {
-            man.motor(rb::MotorId::M1).power(-2500);
-            man.motor(rb::MotorId::M4).power(3900);
+        while (M4_pos < M1_pos) {
+            man.motor(rb::MotorId::M1).power(1500);
+            man.motor(rb::MotorId::M4).power(3000);
             man.motor(rb::MotorId::M4).requestInfo([&](rb::Motor& info) {
                 M4_pos = info.position();
             });
-            man.motor(rb::MotorId::M1).requestInfo([&](rb::Motor& info) {
-                M1_pos = -info.position();
-            });
-            Serial.printf("[DOROVNÁNÍ] M1_pos: %d | M4_pos: %d | odchylka: %d\n", M1_pos, M4_pos, M1_pos - M4_pos);
             delay(5);
         }
     }

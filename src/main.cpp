@@ -18,6 +18,9 @@ void setup() {
   pinMode(Bbutton1, INPUT_PULLUP);
   pinMode(Bbutton2, INPUT_PULLUP);
   Serial.println("Motor example started!");
+    //forward(2000, 50.0); // Call a motor function
+    //delay(5000);
+    //forward(3000, 95.0); // Call a motor function
 }
 
 void loop() {
