@@ -7,86 +7,13 @@
 static const uint8_t Bbutton1 = 34;
 static const uint8_t Bbutton2 = 35;
 const float roztec = 200.0; // roztec kol v mm
+float  koeficient_turn = 1.030; // koeficient pro otáčení na místě
 
+float koeficient_r_f = 1.029;
+float koeficient_l_f = 1.018;
+float koeficient_r_b = 1.03;
+float koeficient_l_b = 1.032;
 
-float koeficient_r_f = 1.066;
-float koeficient_l_f = 1.034;
-float koeficient_r_b = 1.066;
-float koeficient_l_b = 1.035;
-
-
-const float ML_25 = 1.00f, MP_25 = 1.00f;
-const float ML_50 = 1.00f, MP_50 = 0.9987f;
-const float ML_70 = 1.00f, MP_70 = 0.9021f;
-const float ML_95 = 1.00f, MP_95 = 0.9790f;
-//maximalni rychlost vice nez 60% z 4200 tzs, cirka 2600 je maximalka--65% na 95
-// ted je potreba upravovat konstanty, podle noveho maxima 2600
-const float ML_25_back = 1.00f, MP_25_back = 1.00f;
-const float ML_50_back = 1.00f, MP_50_back = 0.99f;
-const float ML_70_back = 1.00f, MP_70_back = 0.98f;
-const float ML_95_back = 1.00f, MP_95_back = 0.97f;
-
-///////////////////////////
-void encoder(int cas)
-{
-    //m1 musí být -
-    int M1_pos, M4_pos, odhylaka, integral, last_odchylka =0;
-    int target = 20000;
-    int a = 500;
-    auto& man = rb::Manager::get(); // vytvoří referenci na man class
-    for(int i = 0; i < target-1; i+=a)
-    {
-        odhylaka = M1_pos-M4_pos;
-        integral += odhylaka; 
-        man.motor(rb::MotorId::M1).requestInfo([&](rb::Motor& info) {
-            M1_pos = -info.position();
-        });
-        man.motor(rb::MotorId::M4).requestInfo([&](rb::Motor& info) {
-            M4_pos = info.position();
-        });
-        man.motor(rb::MotorId::M1).power(-i);
-        man.motor(rb::MotorId::M4).power(i+odhylaka*20);
-        delay(10);
-        
-    }
-    integral =0;    //###
-    for(int i =0; i<cas; i+=50)
-    {
-        odhylaka = M1_pos-M4_pos;
-        integral += odhylaka; 
-
-        man.motor(rb::MotorId::M1).power(-20000);
-        man.motor(rb::MotorId::M4).power(20000+odhylaka*55+integral*0.01+(odhylaka-last_odchylka)*0.1);// i míň se to kvedla 50 -55 je ok  bez derivace )poslední čast na 2,5 m 3cm odchylka
-        //! získá encodery z motoru
-        man.motor(rb::MotorId::M1).requestInfo([&](rb::Motor& info) {
-            M1_pos = -info.position();
-        });
-        man.motor(rb::MotorId::M4).requestInfo([&](rb::Motor& info) {
-            M4_pos = info.position();
-        });
-        std::cout<<"odchylak: "<<M1_pos-M4_pos<<std::endl;
-
-        delay(50);
-        last_odchylka = odhylaka;
-    }
-    for(int i = target; i > 0; i -= a)
-    {
-        odhylaka = M1_pos - M4_pos;
-        integral += odhylaka;
-        
-        man.motor(rb::MotorId::M1).requestInfo([&](rb::Motor& info) {
-            M1_pos = -info.position();
-        });
-        man.motor(rb::MotorId::M4).requestInfo([&](rb::Motor& info) {
-            M4_pos = info.position();
-        });
-
-        man.motor(rb::MotorId::M1).power(-i);
-        man.motor(rb::MotorId::M4).power(i + odhylaka * 20);
-        
-        delay(10);
-    }
-}
 ////////////////////
 // Před funkcí:
 const float Kp = 55.0f;
@@ -250,43 +177,95 @@ void forward(float mm, float speed) {
 void encodery() {
   Serial.printf("L: %f, R: %f\n", rkMotorsGetPositionLeft(), rkMotorsGetPositionRight());
 }
+
 void radius_r(int degrees, int polomer, int speed)
 {
   float sR = speed * ((polomer) / (polomer + roztec));
-  float sL = speed ;
+  float sL = speed * 0.987;
+  bool left_done =false;
+  bool right_done = false;
   if(degrees > 0){
-  float stupne = degrees * koeficient_r_f;
-  rkMotorsDrive((((polomer + roztec) * PI * stupne) / 180)  ,(( polomer * PI * stupne) / 180) , sL * MP_50_back , sR * MP_50);
+    float stupne = degrees * koeficient_r_f;
+    rkMotorsDriveLeftAsync((((polomer + roztec) * PI * stupne) / 180) , sL, [&left_done]() {
+        left_done = true;
+    });
+    rkMotorsDriveRightAsync((( polomer * PI * stupne) / 180) , sR, [&right_done]() {
+        right_done = true;
+    });
   }
   else{
   float stupne= degrees * koeficient_r_b;
-  rkMotorsDrive((((polomer + roztec) * PI * stupne) / 180) , (( polomer * PI * stupne) / 180)  , sL * MP_50_back , sR * MP_50_back);
+    rkMotorsDriveLeftAsync((((polomer + roztec) * PI * stupne) / 180) , sL, [&left_done]() {
+        left_done = true;
+    });
+    rkMotorsDriveRightAsync((( polomer * PI * stupne) / 180) , sR, [&right_done]() {
+        right_done = true;
+    });
   }
+    while(!left_done || !right_done) {
+        delay(10); // čekáme na dokončení obou motorů
+    }
 }
 void radius_l(int degrees, int polomer, int speed){
   float sR = speed ;
   float sL = speed * ((polomer) / (polomer + roztec));
-  if(degrees > 0){
-  float stupne = degrees * koeficient_l_f;
-  rkMotorsDrive((( polomer * PI * stupne) / 180) , (((polomer + roztec) * PI * stupne) / 180)  , sL * MP_50_back , sR * MP_50);
-  }
-  else{
-  float stupne = degrees * koeficient_l_b;
-  rkMotorsDrive((( polomer * PI * stupne) / 180), (((polomer + roztec) * PI * stupne) / 180) , sL * ML_50_back , sR * MP_50_back);
-  }
+  bool left_done = false;
+  bool right_done = false;
+    if(degrees > 0){
+        float stupne = degrees * koeficient_l_f;
+        rkMotorsDriveLeftAsync((( polomer * PI * stupne) / 180) , sL, [&left_done]() {
+            left_done = true;
+        });
+        rkMotorsDriveRightAsync((((polomer + roztec) * PI * stupne) / 180) , sR, [&right_done]() {
+            right_done = true;
+        });
+    }
+    else{
+        float stupne = degrees * koeficient_l_b;
+        rkMotorsDriveLeftAsync((( polomer * PI * stupne) / 180), sL, [&left_done]() {
+            left_done = true;
+        });
+        rkMotorsDriveRightAsync((((polomer + roztec) * PI * stupne) / 180) , sR, [&right_done]() {
+            right_done = true;
+        });
+    }
 }
 void turn_on_spot(int degrees){
-  rkMotorsDrive(((degrees/360) * PI * roztec), ((degrees/360) * -PI * roztec), 30 * MP_50_back , 30 * MP_50);
+  rkMotorsDrive(((degrees/360.0) * PI * roztec) * koeficient_turn , ((degrees/360.0) * -PI * roztec)* koeficient_turn, 30 , 30 );
 }
 void back_buttons(int speed)
 {
-    rkMotorsSetPower(-(speed * MP_50_back), -(speed * MP_50));
+    int M1_pos = 0, M4_pos = 0, odchylka = 0, integral = 0, last_odchylka = 0;
+    const float Kp = 55.0f;
+    const float Ki = 0.01f;
+    const float Kd = 0.1f;
+
+    auto& man = rb::Manager::get();
+
     while (true)
     {
-      if ((digitalRead(Bbutton1) == LOW)&&(digitalRead(Bbutton2) == LOW)){
-        break;
-      }
-      delay(100);
+        // Získání aktuálních pozic
+        man.motor(rb::MotorId::M1).requestInfo([&](rb::Motor& info) {
+            M1_pos = -info.position();
+        });
+        man.motor(rb::MotorId::M4).requestInfo([&](rb::Motor& info) {
+            M4_pos = info.position();
+        });
+
+        odchylka = M1_pos - M4_pos;
+        integral += odchylka;
+
+        man.motor(rb::MotorId::M1).power(speed * 320);
+        man.motor(rb::MotorId::M4).power(-speed * 320 + odchylka * Kp + integral * Ki + (odchylka - last_odchylka) * Kd);
+
+        Serial.printf("[BACK] M1_pos: %d | M4_pos: %d | odchylka: %d | integral: %d\n", M1_pos, M4_pos, odchylka, integral);
+
+        last_odchylka = odchylka;
+
+        if ((digitalRead(Bbutton1) == LOW) && (digitalRead(Bbutton2) == LOW)) {
+            break;
+        }
+        delay(50);
     }
     delay(150);
     Serial.println("Obě Tlačítka STISKNUTY!");
