@@ -139,9 +139,11 @@ void forward(float mm, float speed) {
         delay(10);
     }
     int diff = abs(M1_pos - M4_pos);
-    if (M1_pos < M4_pos) {
+    int time=0;
+    int stop_time = 700; // časový limit pro dorovnání
+    if ((M1_pos < M4_pos)) {
         Serial.printf("[DOROVNÁNÍ] M1 dojíždí: %d ticků\n", diff);
-        while (M1_pos < (M4_pos-5)) {
+        while ((M1_pos < (M4_pos-7)) && (time < stop_time)) {
             man.motor(rb::MotorId::M1).power(-3900);
             man.motor(rb::MotorId::M4).power(2500);
             man.motor(rb::MotorId::M1).requestInfo([&](rb::Motor& info) {
@@ -151,10 +153,12 @@ void forward(float mm, float speed) {
                 M4_pos = info.position();
             });
             delay(5);
+            time+=5;
+            Serial.printf("[time] %d\n", time);
         }
     } else if (M4_pos < M1_pos) {
         Serial.printf("[DOROVNÁNÍ] M4 dojíždí: %d ticků\n", diff);
-        while (M4_pos < (M1_pos - 5)) {
+        while ((M4_pos < (M1_pos - 7)) && (time < stop_time)) {
             man.motor(rb::MotorId::M1).power(-2500);
             man.motor(rb::MotorId::M4).power(3900);
             man.motor(rb::MotorId::M4).requestInfo([&](rb::Motor& info) {
@@ -165,6 +169,8 @@ void forward(float mm, float speed) {
             });
             Serial.printf("[DOROVNÁNÍ] M1_pos: %d | M4_pos: %d | odchylka: %d\n", M1_pos, M4_pos, M1_pos - M4_pos);
             delay(5);
+            time+=5;
+            Serial.printf("[time] %d\n", time);
         }
     }
     // Zastavit oba motory na konci
@@ -235,6 +241,8 @@ void radius_l(int degrees, int polomer, int speed){
 }
 void turn_on_spot(int degrees){
   rkMotorsDrive(((degrees/360.0) * PI * roztec) * koeficient_turn , ((degrees/360.0) * -PI * roztec)* koeficient_turn, 30 , 30 );
+    Serial.printf("Otáčení na místě o %d stupňů\n", degrees);
+    delay(500);
 }
 void back_buttons(int speed)
 {
@@ -242,9 +250,25 @@ void back_buttons(int speed)
     const float Kp = 55.0f;
     const float Ki = 0.01f;
     const float Kd = 0.1f;
-
+    int target = (32000 * speed/100);
     auto& man = rb::Manager::get();
-
+    man.motor(rb::MotorId::M1).setCurrentPosition(0);
+    man.motor(rb::MotorId::M4).setCurrentPosition(0);
+    // Zrychlování
+    for(int i = 0; i < target-1; i += a) {
+        odchylka = M1_pos - M4_pos;
+        integral += odchylka;
+        man.motor(rb::MotorId::M1).requestInfo([&](rb::Motor& info) {
+            M1_pos = -info.position();
+        });
+        man.motor(rb::MotorId::M4).requestInfo([&](rb::Motor& info) {
+            M4_pos = info.position();
+        });
+        man.motor(rb::MotorId::M1).power(i * 0.94);
+        man.motor(rb::MotorId::M4).power(-i + odchylka * Kp + integral * Ki + (odchylka - last_odchylka) * Kd);
+        Serial.printf("[ACCEL] i: %d | M1_pos: %d | M4_pos: %d | odchylka: %d | integral: %d\n", i, M1_pos, M4_pos, odchylka, integral);
+        delay(8);
+    }
     while (true)
     {
         // Získání aktuálních pozic

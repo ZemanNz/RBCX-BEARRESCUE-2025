@@ -156,7 +156,7 @@ void Motors::drive(float left, float right, float speed_left, float speed_right,
         float expectedTimeLeft = calculateExpectedTime(left, speed_left);
         float expectedTimeRight = calculateExpectedTime(right, speed_right);
         float maxExpectedTime = std::max(expectedTimeLeft, expectedTimeRight);
-        const float timeoutSec = maxExpectedTime * 1.67f;
+        const float timeoutSec = maxExpectedTime * 1.87f;
 
         std::thread([this, itr, timeoutSec]() {
             unsigned long startTime = millis();

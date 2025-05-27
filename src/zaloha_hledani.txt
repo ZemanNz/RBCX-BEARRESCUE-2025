@@ -36,17 +36,16 @@ Esp32p4Message msg = {
     .angle = 0
 };
 
-void klepeta_open(auto & g_bus){
-    s_s_move(g_bus, 0, 40, 120); // Otevře klepeta na servo s ID 0
-    s_s_move(g_bus, 1, 200,120); // Otevře klepeta na servo s ID 1
+
+SmartServoBus g_bus; // Globální ukazatel na bus
+
+void klepeta_open(){
+    s_s_move(g_bus, 0, 0, 30); // Otevře klepeta na servo s ID 0
+    s_s_move(g_bus, 1, 240, 30); // Otevře klepeta na servo s ID 1
 }
-void klepeta_open_max(auto & g_bus){
-    s_s_move(g_bus, 0, 0, 120); // Otevře klepeta na servo s ID 0
-    s_s_move(g_bus, 1, 240,120); // Otevře klepeta na servo s ID 1
-}
-void klepeta_close(auto & g_bus){
-    s_s_soft_move(g_bus, 0, 128, 70); // Zavře klepeta na servo s ID 0
-    s_s_soft_move(g_bus, 1, 120, 70); // Zavře klepeta na servo s ID 1
+void klepeta_close(){
+    s_s_soft_move(g_bus, 0, 120, 50); // Zavře klepeta na servo s ID 0
+    s_s_soft_move(g_bus, 1, 120, 50); // Zavře klepeta na servo s ID 1
 }
 // Funkce pro aktualizaci struktury podle příchozích dat
 void updateEsp32p4Message(Esp32p4Message* msg) {
@@ -95,24 +94,17 @@ void projeti_bludiste_tam(){
     // Příkaz pro projetí bludiště
     forward(595, 90); // Předpokládáme, že tato funkce je definována v motor_commands.h
     radius_r(180, 130, 80);
-    radius_l(187, 155, 80); 
+    radius_l(193, 155, 80); 
     back_buttons(60);
     forward(1400, 95);
     Serial.println("projeti bludiště hotova");
 }
 void jed_pro_medu(){
     ///////////////// hledani podle uhlu
-    turn_on_spot(-(int)msg.angle);
-    Serial.printf("Otočeno o %d stupňů\n", -(int)msg.angle);
-    auto & g_bus = rkSmartServoBus(2);
-    klepeta_open_max(g_bus);
-    forward(800, 70);
-    klepeta_close(g_bus);
-    turn_on_spot(-(90-msg.angle)); // otočíme se zpět
-    back_buttons(60); // vrátíme se zpět
-    forward(80, 60); // a jedeme zpět
-    turn_on_spot(90);
-    klepeta_open(g_bus); // otevřeme klepeta
+    turn_on_spot(-msg.angle);
+    klepeta_open();
+    forward(1000, 70);
+    klepeta_close();
     /////////////
 }
 
@@ -120,41 +112,39 @@ void setup() {
   Serial.begin(115200);
   rkConfig cfg;
   rkSetup(cfg);
-  rkLedRed(true); // Turn on red LED
+  //rkLedRed(true); // Turn on red LED
   rkLedBlue(true); // Turn on blue LED
   printf("Robotka started!\n");
     // Nastavení tlačítek
   pinMode(Bbutton1, INPUT_PULLUP);
   pinMode(Bbutton2, INPUT_PULLUP);
-  auto &bus = rkSmartServoBus(2);
-  s_s_init(bus, 1, 120, 240);
-  s_s_init(bus, 0, 40, 130);
+  auto &g_bus = rkSmartServoBus(2);
+  s_s_init(g_bus, 1, 0, 240);
+  s_s_init(g_bus, 0, 0, 240);
   printf("RBCX UART RX started!\n");
   Serial1.begin(115200, SERIAL_8N1, RX1_PIN, TX1_PIN);
   Serial.println("Motor example started!");
-  while(true){
+  
+
+}
+
+void loop() {
+    // Kontrola stavu tlačítek
     if(msg.on){
         projeti_bludiste_tam();
         jed_pro_medu();
-        msg.on= false;
     }
     else{
         updateEsp32p4Message(&msg);
     }
     if (digitalRead(Bbutton1) == LOW) {
         Serial.println("Button 1 pressed");
-        klepeta_open(bus);
+        klepeta_open();
         // Zde můžete přidat kód pro akci při stisku tlačítka 1
     }
     if (digitalRead(Bbutton2) == LOW) {
         Serial.println("Button 2 pressed");
-        klepeta_close(bus);
+        klepeta_close();
         // Zde můžete přidat kód pro akci při stisku tlačítka 2
     }
-    delay(100);
-  }
-}
-
-void loop() {
-
 }
