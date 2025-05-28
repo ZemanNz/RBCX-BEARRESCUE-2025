@@ -17,7 +17,9 @@ typedef struct __attribute__((packed)) {
     uint16_t y;
     bool camera;
     bool on;
-    int16_t angle; // Přidáno pole pro úhel
+    int16_t angle;         // Úhel ve stupních
+    uint16_t distance;     // Délka v mm (nebo cm dle odesílatele)
+    uint16_t max_distance; // Maximální možná délka v mm
 } Esp32p4Message;
 
 enum RxState { WAIT_SYNC0, WAIT_SYNC1, READ_PAYLOAD, READ_CHECKSUM };
@@ -33,7 +35,9 @@ Esp32p4Message msg = {
     .y = 0,
     .camera = false,
     .on = false,
-    .angle = 0
+    .angle = 0,
+    .distance = 0,
+    .max_distance = 0
 };
 bool mam_ho(){
     int distance = rkUltraMeasure(4);
@@ -46,16 +50,16 @@ bool mam_ho(){
     }
 }
 void klepeta_open(auto & g_bus){
-    s_s_move(g_bus, 0, 40, 120); // Otevře klepeta na servo s ID 0
+    s_s_move(g_bus, 0, 80, 120); // Otevře klepeta na servo s ID 0
     s_s_move(g_bus, 1, 200,120); // Otevře klepeta na servo s ID 1
 }
 void klepeta_open_max(auto & g_bus){
-    s_s_move(g_bus, 0, 0, 120); // Otevře klepeta na servo s ID 0
+    s_s_move(g_bus, 0, 40, 120); // Otevře klepeta na servo s ID 0
     s_s_move(g_bus, 1, 240,120); // Otevře klepeta na servo s ID 1
 }
 void klepeta_close(auto & g_bus){
-    s_s_soft_move(g_bus, 0, 128, 70); // Zavře klepeta na servo s ID 0
-    s_s_soft_move(g_bus, 1, 120, 70); // Zavře klepeta na servo s ID 1
+    s_s_soft_move(g_bus, 0, 160, 90); // Zavře klepeta na servo s ID 0
+    s_s_soft_move(g_bus, 1, 120, 90); // Zavře klepeta na servo s ID 1
 }
 // Funkce pro aktualizaci struktury podle příchozích dat
 void updateEsp32p4Message(Esp32p4Message* msg) {
@@ -84,7 +88,8 @@ void updateEsp32p4Message(Esp32p4Message* msg) {
             case READ_CHECKSUM:
                 if (c == checksum) {
                     memcpy(msg, buf, PAYLOAD_SIZE); // Přepisuje předanou strukturu
-                    printf("Received: x=%u, y=%u, camera=%u, on=%u, angle=%d\n", msg->x, msg->y, msg->camera, msg->on, msg->angle);
+                    printf("Received: x=%u, y=%u, camera=%u, on=%u, angle=%d, distance=%u, max_distance=%u\n",
+                        msg->x, msg->y, msg->camera, msg->on, msg->angle, msg->distance, msg->max_distance);
                     if (msg->on) {
                         rkLedGreen(true);
                     } else {
@@ -102,26 +107,45 @@ void updateEsp32p4Message(Esp32p4Message* msg) {
 void projeti_bludiste_tam(){
     Serial.println("projeti bludiště tam");
     // Příkaz pro projetí bludiště
+    auto & g_bus = rkSmartServoBus(2);
     forward(595, 90); // Předpokládáme, že tato funkce je definována v motor_commands.h
-    radius_r(180, 130, 80);
-    radius_l(187, 155, 80); 
-    back_buttons(60);
+    radius_r(180, 130, 95);
+    forward(100, 95);
+    radius_l(187, 160, 95); 
+    back_buttons(80);
+    klepeta_open(g_bus);
     forward(1400, 95);
     Serial.println("projeti bludiště hotova");
 }
 void jed_pro_medu(){
     ///////////////// hledani podle uhlu
     turn_on_spot(-(int)msg.angle);
-    Serial.printf("Otočeno o %d stupňů\n", -(int)msg.angle);
     auto & g_bus = rkSmartServoBus(2);
     klepeta_open_max(g_bus);
-    forward(800, 70);
+    if(msg.distance >= ( - 100)){
+        Serial.println("Medvěd je blízko, hledáme ho!");
+    }
+    else{
+        Serial.println("Medvěd je daleko, jedeme k němu!");
+    }
+    forward(msg.distance, 70);
+    if(mam_ho()){
+        rkBuzzerSet(true);
+        delay(500);
+        rkBuzzerSet(false);
+        Serial.println("Medvěd byl nalezen!");
+    }
+    else{
+        Serial.println("Medvěd nebyl nalezen!");
+    }
+    delay(200);
     klepeta_close(g_bus);
+    delay(1000);
     turn_on_spot(-(90-msg.angle)); // otočíme se zpět
-    back_buttons(60); // vrátíme se zpět
-    forward(80, 60); // a jedeme zpět
+    back_buttons(80); // vrátíme se zpět
+    forward(60, 60); // a jedeme zpět
     turn_on_spot(90);
-    klepeta_open(g_bus); // otevřeme klepeta
+    back_buttons(95); // vrátíme se zpět
     /////////////
 }
 
@@ -137,7 +161,7 @@ void setup() {
   pinMode(Bbutton2, INPUT_PULLUP);
   auto &bus = rkSmartServoBus(2);
   s_s_init(bus, 1, 120, 240);
-  s_s_init(bus, 0, 40, 130);
+  s_s_init(bus, 0, 40, 200);
   printf("RBCX UART RX started!\n");
   Serial1.begin(115200, SERIAL_8N1, RX1_PIN, TX1_PIN);
   Serial.println("Motor example started!");
@@ -159,6 +183,9 @@ void setup() {
         Serial.println("Button 2 pressed");
         klepeta_close(bus);
         // Zde můžete přidat kód pro akci při stisku tlačítka 2
+    }
+    if(rkButtonIsPressed(BTN_UP)){
+        klepeta_open_max(bus);
     }
     delay(100);
   }

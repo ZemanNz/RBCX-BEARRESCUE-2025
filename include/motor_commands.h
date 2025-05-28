@@ -27,12 +27,12 @@ void forward(float mm, float speed) {
     int target = (32000 * speed/100);
     // std::cout << "target: " << target << std::endl;
 
-    auto& man = rb::Manager::get(); // vytvoří referenci na man class
+    auto& man = rb::Manager::get(); // vytvoří referenci na man clas
     man.motor(rb::MotorId::M1).setCurrentPosition(0);
     man.motor(rb::MotorId::M4).setCurrentPosition(0);
     // Startovní pozice
     man.motor(rb::MotorId::M1).requestInfo([&](rb::Motor& info) {
-        M1_pos_start = -info.position();
+        M1_pos_start = -info.position(); 
     });
     man.motor(rb::MotorId::M4).requestInfo([&](rb::Motor& info) {
         M4_pos_start = info.position();
@@ -269,7 +269,9 @@ void back_buttons(int speed)
         // Serial.printf("[ACCEL] i: %d | M1_pos: %d | M4_pos: %d | odchylka: %d | integral: %d\n", i, M1_pos, M4_pos, odchylka, integral);
         delay(8);
     }
-    while (true)
+    int time = 0;
+    int stop_time = 5000; // časový limit pro dorovnání
+    while (time < stop_time)
     {
         // Získání aktuálních pozic
         man.motor(rb::MotorId::M1).requestInfo([&](rb::Motor& info) {
@@ -293,6 +295,7 @@ void back_buttons(int speed)
             break;
         }
         delay(50);
+        time+=50;
     }
     delay(150);
     // Serial.println("Obě Tlačítka STISKNUTY!");

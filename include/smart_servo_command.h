@@ -10,8 +10,8 @@ void s_s_init(auto & bus, int id, int low = 0, int high = 240) {
     bus.limit(id, Angle::deg(low), Angle::deg(high));
     bus.setAutoStopParams(
         SmartServoBus::AutoStopParams{//nastaveni sily stisku
-            .max_diff_centideg = 400,
-            .max_diff_readings = 2,
+            .max_diff_centideg = 500,
+            .max_diff_readings = 3,
         });
     printf("Servo %d inicializováno\n", id);
 }
