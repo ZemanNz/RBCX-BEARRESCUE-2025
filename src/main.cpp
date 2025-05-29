@@ -35,9 +35,9 @@ Esp32p4Message msg = {
     .y = 0,
     .camera = false,
     .on = false,
-    .angle = 0,
-    .distance = 0,
-    .max_distance = 0
+    .angle = 45,
+    .distance = 1000,
+    .max_distance = 1300
 };
 bool mam_ho(){
     int distance = rkUltraMeasure(4);
@@ -108,27 +108,31 @@ void projeti_bludiste_tam(){
     Serial.println("projeti bludiště tam");
     // Příkaz pro projetí bludiště
     auto & g_bus = rkSmartServoBus(2);
-    forward(595, 90); // Předpokládáme, že tato funkce je definována v motor_commands.h
-    radius_r(180, 130, 95);
-    forward(100, 95);
-    radius_l(187, 160, 95); 
-    back_buttons(80);
+    small_forward(595, 70); // Předpokládáme, že tato funkce je definována v motor_commands.h
+    radius_r(183, 130, 75);
+    //small_forward(140, 95);
+    radius_l(178, 215, 75); 
+    //back_buttons(80);
     klepeta_open(g_bus);
-    forward(1400, 95);
+    forward(810, 95);
     Serial.println("projeti bludiště hotova");
 }
 void jed_pro_medu(){
     ///////////////// hledani podle uhlu
-    turn_on_spot(-(int)msg.angle);
+    delay(3000);
+    radius_l((int)msg.angle, 0, 70); // otočíme se na správný směr
     auto & g_bus = rkSmartServoBus(2);
     klepeta_open_max(g_bus);
-    if(msg.distance >= ( - 100)){
-        Serial.println("Medvěd je blízko, hledáme ho!");
+    if(msg.distance >= (msg.max_distance - 430)){
+        forward(msg.distance - 400 , 70);
+        klepeta_open(g_bus);
+        delay(300);
+        small_forward(200, 70); // Předpokládáme, že tato funkce je definována v motor_commands.h
     }
     else{
-        Serial.println("Medvěd je daleko, jedeme k němu!");
+        
+        forward(msg.distance - 100 , 70);
     }
-    forward(msg.distance, 70);
     if(mam_ho()){
         rkBuzzerSet(true);
         delay(500);
@@ -148,6 +152,17 @@ void jed_pro_medu(){
     back_buttons(95); // vrátíme se zpět
     /////////////
 }
+void navrat_domu(){
+    auto & g_bus = rkSmartServoBus(2);
+    radius_l(90, 0, 70); // otočíme se na správný směr
+    back_buttons(50); // vrátíme se zpět
+    small_forward(220, 70); // a jedeme zpět
+    radius_r(90, 350, 70); // otočíme se zpět
+    small_forward(200, 70); // a jedeme zpět
+    radius_l(180, 120, 70); // otočíme se zpět
+    small_forward(500, 70); // a jedeme zpět
+    klepeta_open(g_bus);
+}
 
 void setup() {
   Serial.begin(115200);
@@ -166,17 +181,20 @@ void setup() {
   Serial1.begin(115200, SERIAL_8N1, RX1_PIN, TX1_PIN);
   Serial.println("Motor example started!");
   while(true){
-    if(msg.on){
-        projeti_bludiste_tam();
-        jed_pro_medu();
-        msg.on= false;
-    }
-    else{
-        updateEsp32p4Message(&msg);
-    }
+    // if(msg.on){
+    //     projeti_bludiste_tam();
+    //     jed_pro_medu();
+    //     msg.on= false;
+    // }
+    // else{
+    //     updateEsp32p4Message(&msg);
+    // }
     if (digitalRead(Bbutton1) == LOW) {
         Serial.println("Button 1 pressed");
-        klepeta_open(bus);
+        delay(3000);
+        projeti_bludiste_tam();
+        jed_pro_medu();
+        navrat_domu();
         // Zde můžete přidat kód pro akci při stisku tlačítka 1
     }
     if (digitalRead(Bbutton2) == LOW) {
@@ -186,6 +204,9 @@ void setup() {
     }
     if(rkButtonIsPressed(BTN_UP)){
         klepeta_open_max(bus);
+    }
+    if(rkButtonIsPressed(BTN_DOWN)){
+        klepeta_open(bus);
     }
     delay(100);
   }
