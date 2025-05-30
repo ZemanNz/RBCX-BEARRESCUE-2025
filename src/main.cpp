@@ -120,7 +120,7 @@ void projeti_bludiste_tam(){
 void jed_pro_medu(){
     ///////////////// hledani podle uhlu
     delay(3000);
-    radius_l((int)msg.angle, 0, 70); // otočíme se na správný směr
+    radius_l((int)msg.angle, 0, 50); // otočíme se na správný směr
     auto & g_bus = rkSmartServoBus(2);
     klepeta_open_max(g_bus);
     if(msg.distance >= (msg.max_distance - 430)){
@@ -145,7 +145,8 @@ void jed_pro_medu(){
     delay(200);
     klepeta_close(g_bus);
     delay(1000);
-    turn_on_spot(-(90-msg.angle)); // otočíme se zpět
+    turn_on_spot(-(95-msg.angle)); // otočíme se zpět 95, protoze se otoci malo
+    delay(300);
     back_buttons(80); // vrátíme se zpět
     forward(60, 60); // a jedeme zpět
     turn_on_spot(90);
@@ -154,13 +155,13 @@ void jed_pro_medu(){
 }
 void navrat_domu(){
     auto & g_bus = rkSmartServoBus(2);
-    radius_l(90, 0, 70); // otočíme se na správný směr
+    radius_l(90, 0, 90); // otočíme se na správný směr
     back_buttons(50); // vrátíme se zpět
-    small_forward(220, 70); // a jedeme zpět
-    radius_r(90, 350, 70); // otočíme se zpět
-    small_forward(200, 70); // a jedeme zpět
-    radius_l(180, 120, 70); // otočíme se zpět
-    small_forward(500, 70); // a jedeme zpět
+    small_forward(160, 70); // a jedeme zpět
+    radius_r(90, 350, 90); // otočíme se zpět
+    small_forward(200, 90); // a jedeme zpět
+    radius_l(180, 110, 90); // otočíme se zpět
+    small_forward(550, 90); // a jedeme zpět
     klepeta_open(g_bus);
 }
 
@@ -181,20 +182,21 @@ void setup() {
   Serial1.begin(115200, SERIAL_8N1, RX1_PIN, TX1_PIN);
   Serial.println("Motor example started!");
   while(true){
-    // if(msg.on){
-    //     projeti_bludiste_tam();
-    //     jed_pro_medu();
-    //     msg.on= false;
-    // }
-    // else{
-    //     updateEsp32p4Message(&msg);
-    // }
-    if (digitalRead(Bbutton1) == LOW) {
-        Serial.println("Button 1 pressed");
-        delay(3000);
+    if(msg.on){
         projeti_bludiste_tam();
         jed_pro_medu();
         navrat_domu();
+        msg.on= false;
+    }
+    else{
+        updateEsp32p4Message(&msg);
+    }
+    if (digitalRead(Bbutton1) == LOW) {
+        Serial.println("Button 1 pressed");
+        // delay(3000);
+        // projeti_bludiste_tam();
+        // jed_pro_medu();
+        // navrat_domu();
         // Zde můžete přidat kód pro akci při stisku tlačítka 1
     }
     if (digitalRead(Bbutton2) == LOW) {
